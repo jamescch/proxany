@@ -160,35 +160,59 @@ class HttpHandler(threading.Thread):
 
     def simple_read(self, socket):
         return socket.recv(8192)
+        #return socket.recv(16384)
 
     def relay(self, rsock, host):
         inputs = [rsock, self.socket]
         outputs = []
+        count = 0
         while True:
+            # count += 1
+            print("select")
             readable, writable, exceptional = select.select(inputs, outputs, inputs)
             for s in readable:
                 if s is rsock:
                     raddr = rsock.getsockname()
                     #print '{0} {1} read server'.format(host, raddr[1])
                     #res = self.ReadHttp(s)
-                    res = self.simple_read(s)
-                    if res:
-                        #self.print_content(res)
-                        self.socket.sendall(res)
-                    else:
-                        print('server [{} {}] close to client [{}]'.format(host, raddr[1], self.client_port))
-                        self.socket.close()
-                        rsock.close()
-                        return
+                    print("server read")
+                    while True:
+                        res = self.simple_read(s)
+                        print("{}".format(len(res)))
+
+                        if res:
+                            #self.print_content(res)
+                            print("send to client")
+                            #self.socket.sendall(res)
+                            wfile = self.socket.makefile('w')
+                            wfile.write(res.decode())
+                            wfile.flush()
+                            print("pending", rsock.pending())
+                            if rsock.pending() == 0:
+                                break
+                            if count == 10:
+                                extra = s.recv(7000)
+                                print("read extra {}".format(len(extra)))
+                                wfile.write(extra.decode())
+                                wfile.flush()
+                        else:
+                            print('server [{} {}] close to client [{}]'.format(host, raddr[1], self.client_port))
+                            self.socket.close()
+                            rsock.close()
+                            return
                 else:
                     raddr = s.getpeername()
+                    print('client read')
                     #print '{0} {1} read client'.format(host, raddr[1])
                     #res = self.ReadHttp(self.socket)
                     res = self.simple_read(s)
                     if res:
                         #rsock.send(res[0] + res[1])
                         #self.print_content(res)
-                        rsock.sendall(res)
+                        #rsock.sendall(res)
+                        wfile = rsock.makefile('w')
+                        wfile.write(res.decode())
+                        wfile.flush()
                     else:
                         print('server [{} {}] was closed by client [{}]'.format(host, raddr[1], self.client_port))
                         self.socket.close()
@@ -248,7 +272,7 @@ class HttpHandler(threading.Thread):
         print(request[0])
         mod_request = request[0].replace('Connection', 'Proxy-Connection')
         # rsock = self.create_socket_and_connect_to_origin_dst(host, int(port))
-        proxy_sock = self.send_connect(host, '192.168.56.2', 3128)
+        proxy_sock = self.send_connect(host, '192.168.2.1', 3128)
         if proxy_sock is None:
             self.socket.close()
             return

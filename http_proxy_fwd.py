@@ -65,15 +65,17 @@ class HttpHandler(threading.Thread):
         while len(line) :
             line = source_sock.recv(1)
             data += line
-            if not data.find("\r\n\r\n")==-1 :
+            if not data.find(b"\r\n\r\n")==-1 :
                 header = data
                 data = ""
                 break
-        dic_header = dict(re.findall(r"(?P<name>.*?): (?P<value>.*?)\r\n", header))
+
+        str_header = header.decode()
+        dic_header = dict(re.findall(r"(?P<name>.*?): (?P<value>.*?)\r\n", str_header))
         #print dic_header
         #for (k,v) in dic_header.items():
         #        print k,":",v
-        return dic_header, header
+        return dic_header, str_header
 
     def ReadHttp(self, source_sock):
         # Read whole Http packet, and return header and body in string type
@@ -88,7 +90,7 @@ class HttpHandler(threading.Thread):
         if 'User-Agent' in dic_header:
             self.user_agent = dic_header['User-Agent']
 
-        body = ""
+        body = b""
         if 'Transfer-Encoding' in dic_header and dic_header['Transfer-Encoding'] == 'chunked' :
             line = self.read_line(source_sock)
             body += line
@@ -112,7 +114,7 @@ class HttpHandler(threading.Thread):
                 body += line
 
             #self.PrinfContent(body)
-        return header, body
+        return header, body.decode()
 
     def print_content(self, content):
         index = 0
@@ -230,7 +232,7 @@ class HttpHandler(threading.Thread):
         
 
     def run(self):
-        self.retrieve_original_addr(self.socket)
+        # self.retrieve_original_addr(self.socket)
         request = self.ReadHttp(self.socket)
         host, port = self.get_host_from_header(request[0])
         print('aaa {}:{}'.format(host, port))
@@ -238,28 +240,27 @@ class HttpHandler(threading.Thread):
         if ("icloud" in host) or ("dropbox" in host) or ("apple" in host):
             return
 
-        if ("wiki" not in host) and ("neverssl" not in host):
-            return
+        # if ("wiki" not in host) and ("neverssl" not in host):
+        #     return
 
         # self.send_connect(host, '192.168.56.2', 3128)
 
         print(request[0])
-        mod_request = request[0].replace('Connection', 'Proxy-Connection')
+        # mod_request = request[0].replace('Connection', 'Proxy-Connection')
+        mod_request = request[0].replace('GET ', 'GET http://ftp.tw.debian.org')
+        # mod_request = mod_request.replace('\r\n\r\n', '\r\nProxy-Connection: Keep-Alive\r\n\r\n')
         # rsock = self.create_socket_and_connect_to_origin_dst(host, int(port))
-        rsock = self.create_socket_and_connect_to_origin_dst('192.168.56.2', 3128)
+        rsock = self.create_socket_and_connect_to_origin_dst('192.168.2.1', 3128)
 
         # 4. Forward the request sent by user to the fakeSocket
-        rsock.sendall(mod_request+request[1])
+        print(mod_request)
+        rsock.sendall((mod_request+request[1]).encode())
 
         print('Client [{}] Request Forwarding Success'.format(self.client_port))
-        # 5. Read response from fakeSocket and forward to victim's socket
-        # 6. close victim's socket and fakeSocket
-        response = self.ReadHttp(rsock)
-        print('Server [{}] responded to client [{}]'.format(host, self.client_port))
-        #print "server msg: " + response[0]
-        #self.print_content(response[1])
-        self.socket.sendall(response[0]+response[1])
-        print('Server sent')
+        # response = self.ReadHttp(rsock)
+        # print('Server [{}] responded to client [{}]'.format(host, self.client_port))
+        # self.socket.sendall((response[0]+response[1]).encode())
+        # print('Server sent')
                 
         self.relay(rsock, host)
 
