@@ -14,5 +14,3 @@ if __name__ == '__main__':
 
     threading.Thread(target=http_proxy_fwd.start, args=(ip, port)).start()
     threading.Thread(target=https_proxy_fwd.start, args=(ip, port+1)).start()
-
-
