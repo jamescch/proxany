@@ -5,7 +5,7 @@ import https_proxy_fwd
 
 if __name__ == '__main__':
 
-    if not len(sys.argv) == 2 :
+    if not len(sys.argv) == 2:
         print('Usage: python mitm.py <your address> <port>')
     ip = sys.argv[1]
     #ip = '0.0.0.0'

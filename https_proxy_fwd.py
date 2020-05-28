@@ -4,6 +4,7 @@ import ssl
 import string
 import struct
 import threading
+import time
 from socket import *
 
 from httpparser import read_http, get_host_from_header
@@ -49,8 +50,8 @@ class HttpHandler(threading.Thread):
         return socket.recv(8192)
         #return socket.recv(16384)
 
-    def relay(self, rsock, host):
-        inputs = [rsock, self.socket]
+    def relay(self, proxy_socket, host):
+        inputs = [proxy_socket, self.socket]
         outputs = []
         count = 0
         while True:
@@ -58,8 +59,8 @@ class HttpHandler(threading.Thread):
             print("select")
             readable, writable, exceptional = select.select(inputs, outputs, inputs)
             for s in readable:
-                if s is rsock:
-                    raddr = rsock.getsockname()
+                if s is proxy_socket:
+                    raddr = proxy_socket.getsockname()
                     #print '{0} {1} read server'.format(host, raddr[1])
                     #res = self.ReadHttp(s)
                     print("server read")
@@ -71,21 +72,16 @@ class HttpHandler(threading.Thread):
                             #self.print_content(res)
                             print("send to client")
                             #self.socket.sendall(res)
-                            wfile = self.socket.makefile('w')
-                            wfile.write(res.decode())
+                            wfile = self.socket.makefile('wb')
+                            wfile.write(res)
                             wfile.flush()
-                            print("pending", rsock.pending())
-                            if rsock.pending() == 0:
+                            print("pending", proxy_socket.pending())
+                            if proxy_socket.pending() == 0:
                                 break
-                            if count == 10:
-                                extra = s.recv(7000)
-                                print("read extra {}".format(len(extra)))
-                                wfile.write(extra.decode())
-                                wfile.flush()
                         else:
                             print('server [{} {}] close to client [{}]'.format(host, raddr[1], self.client_port))
                             self.socket.close()
-                            rsock.close()
+                            proxy_socket.close()
                             return
                 else:
                     raddr = s.getpeername()
@@ -94,16 +90,13 @@ class HttpHandler(threading.Thread):
                     #res = self.ReadHttp(self.socket)
                     res = self.simple_read(s)
                     if res:
-                        #rsock.send(res[0] + res[1])
-                        #self.print_content(res)
-                        #rsock.sendall(res)
-                        wfile = rsock.makefile('w')
+                        wfile = proxy_socket.makefile('w')
                         wfile.write(res.decode())
                         wfile.flush()
                     else:
                         print('server [{} {}] was closed by client [{}]'.format(host, raddr[1], self.client_port))
                         self.socket.close()
-                        rsock.close()
+                        proxy_socket.close()
                         return
 
     def send_connect(self, host, proxy, proxy_port, user_agent):
@@ -144,6 +137,7 @@ class HttpHandler(threading.Thread):
         print('The original addr is {}:{}'.format(ip, port))
 
     def run(self):
+        print(threading.current_thread().ident, 'run thread')
         # self.retrieve_original_addr(self.socket)
         header, body, user_agent = read_http(self.socket)
         host, port = get_host_from_header(header)
@@ -191,7 +185,16 @@ def start(ip, port):
     server_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     server_socket.bind(bind_address)
     server_socket.listen(1)
+    context.set_servername_callback(sni_callback)
     ssl_socket = context.wrap_socket(server_socket, server_side=True)
     while True:
         client_socket, addr = ssl_socket.accept()
+        print(client_socket)
         HttpHandler(client_socket, port).start()
+
+
+def sni_callback(ssl_socket, server_name, ssl_context):
+    print(ssl_socket)
+    print(threading.current_thread().ident, "server: ", server_name)
+    time.sleep(10)
+    return None
