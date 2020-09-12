@@ -107,7 +107,7 @@ class HttpHandler(threading.Thread):
         print(request[0])
         mod_request = request[0]
         # mod_request = request[0].replace('Connection', 'Proxy-Connection')
-        mod_request = request[0].replace('GET ', 'GET http://ftp.tw.debian.org')
+        mod_request = request[0].replace('GET ', f'GET http://{host}')
         # mod_request = mod_request.replace('\r\n\r\n', '\r\nProxy-Connection: Keep-Alive\r\n\r\n')
         # rsock = self.create_socket_and_connect_to_origin_dst(host, int(port))
         rsock = self.create_socket_and_connect_to_origin_dst('192.168.2.1', 3128)

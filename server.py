@@ -66,12 +66,14 @@ def start(ip, port, mode):
         while True:
             client_socket, address = socket_obj.accept()
             ct = HttpHandler(client_socket, port)
-            ct.run()
+            print('connect start')
+            ct.start()
+            print('connect fin')
     elif mode is 'https':
         socket_obj = create_socket(ip, port)
         # socket_obj = create_tls_socket(socket_obj)
         while True:
             client_socket, address = socket_obj.accept()
             ct = HttpsHandler(client_socket)
-            ct.run()
+            ct.start()
             print(threading.current_thread().ident, 'accept')
