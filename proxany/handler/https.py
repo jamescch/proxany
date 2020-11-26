@@ -8,11 +8,13 @@ from proxany.httpparser import read_http
 
 
 class HttpsHandler(threading.Thread):
-    def __init__(self, socket):
+    def __init__(self, socket, proxy_ip, proxy_port):
         threading.Thread.__init__(self)
         self.socket = socket
         if socket:
             self.client_port = socket.getpeername()[1]
+        self.proxy_ip = proxy_ip
+        self.proxy_port = proxy_port
 
     def create_socket_and_connect_to_origin_dst(self, host, port):
         sock = socket()
@@ -93,7 +95,7 @@ class HttpsHandler(threading.Thread):
         print(threading.current_thread().ident, 'run thread')
         server_name, data_client_hello = tls.parse(self.socket)
 
-        proxy_sock = self.send_connect(server_name, '192.168.2.1', 3128)
+        proxy_sock = self.send_connect(server_name, self.proxy_ip, self.proxy_port)
         if proxy_sock is None:
             self.socket.close()
             return

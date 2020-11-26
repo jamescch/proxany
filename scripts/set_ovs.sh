@@ -10,6 +10,8 @@ mitm_ip=192.168.2.2
 mitm_ip_16=$(printf '%02x' ${mitm_ip//./ })
 mitm_port=3128
 mitm_port_s=3129
+proxy_ip=192.168.2.1
+proxy_port=3128
 
 get-mac() {
   ovs_mac2=$(ovs-vsctl get interface br-ext mac-in-use | sed 's/"//g')
@@ -60,4 +62,4 @@ ip addr add $mitm_ip_cidr dev br-ext
 
 add-flow
 
-sudo python3 proxy_fwd.py 0.0.0.0 3128
+sudo python3 proxany/proxy_fwd.py 0.0.0.0 3128 $proxy_ip $proxy_port

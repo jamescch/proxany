@@ -60,12 +60,12 @@ def sni_callback(ssl_socket, server_name, ssl_context):
     return None
 
 
-def start(ip, port, mode):
+def start(ip, port, mode, proxy_ip, proxy_port):
     if mode is 'http':
         socket_obj = create_socket(ip, port)
         while True:
             client_socket, address = socket_obj.accept()
-            ct = HttpHandler(client_socket, port)
+            ct = HttpHandler(client_socket, proxy_ip, proxy_port)
             print('connect start')
             ct.start()
             print('connect fin')
@@ -74,6 +74,6 @@ def start(ip, port, mode):
         # socket_obj = create_tls_socket(socket_obj)
         while True:
             client_socket, address = socket_obj.accept()
-            ct = HttpsHandler(client_socket)
+            ct = HttpsHandler(client_socket, proxy_ip, proxy_port)
             ct.start()
             print(threading.current_thread().ident, 'accept')

@@ -9,12 +9,13 @@ from proxany.httpparser import read_http, get_host_from_header
 
 
 class HttpHandler(threading.Thread):
-    def __init__(self, socket, port):
+    def __init__(self, socket, proxy_ip, proxy_port):
         threading.Thread.__init__(self)
         self.socket = socket
         if socket:
             self.client_port = socket.getpeername()[1]
-        self.listen_port = port
+        self.proxy_ip = proxy_ip
+        self.proxy_port = proxy_port
 
     def create_socket_and_connect_to_origin_dst(self, host, port):
         sock = socket()
@@ -111,7 +112,7 @@ class HttpHandler(threading.Thread):
         mod_request = mod_request.replace('Connection: keep-alive', 'Connection: close')
         # mod_request = mod_request.replace('\r\n\r\n', '\r\nProxy-Connection: Keep-Alive\r\n\r\n')
         # rsock = self.create_socket_and_connect_to_origin_dst(host, int(port))
-        rsock = self.create_socket_and_connect_to_origin_dst('192.168.2.1', 3128)
+        rsock = self.create_socket_and_connect_to_origin_dst(self.proxy_ip, self.proxy_port)
 
         # 4. Forward the request sent by user to the fakeSocket
         print(mod_request)
