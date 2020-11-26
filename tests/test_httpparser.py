@@ -1,7 +1,6 @@
 import unittest
-from socket import *
 
-from httpparser import get_host_from_header
+from proxany.httpparser import get_host_from_header
 
 
 class TestProxyFwd(unittest.TestCase):

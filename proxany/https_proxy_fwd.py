@@ -7,7 +7,7 @@ import threading
 import time
 from socket import *
 
-from httpparser import read_http, get_host_from_header
+from proxany.httpparser import read_http, get_host_from_header
 
 
 class HttpHandler(threading.Thread):

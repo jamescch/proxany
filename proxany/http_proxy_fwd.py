@@ -5,7 +5,7 @@ import struct
 import threading
 from socket import *
 
-from httpparser import read_http, get_host_from_header
+from proxany.httpparser import read_http, get_host_from_header
 
 
 class HttpHandler(threading.Thread):
@@ -108,6 +108,7 @@ class HttpHandler(threading.Thread):
         mod_request = request[0]
         # mod_request = request[0].replace('Connection', 'Proxy-Connection')
         mod_request = request[0].replace('GET ', f'GET http://{host}')
+        mod_request = mod_request.replace('Connection: keep-alive', 'Connection: close')
         # mod_request = mod_request.replace('\r\n\r\n', '\r\nProxy-Connection: Keep-Alive\r\n\r\n')
         # rsock = self.create_socket_and_connect_to_origin_dst(host, int(port))
         rsock = self.create_socket_and_connect_to_origin_dst('192.168.2.1', 3128)

@@ -3,8 +3,8 @@ import threading
 import time
 import ssl
 
-from handler.https import HttpsHandler
-from http_proxy_fwd import HttpHandler
+from proxany.handler.https import HttpsHandler
+from proxany.http_proxy_fwd import HttpHandler
 
 
 class client_thread(threading.Thread):

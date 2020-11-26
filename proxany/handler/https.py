@@ -1,11 +1,10 @@
 import select
-import string
 import threading
 import socket as Socket
 from socket import *
 
-from decode import tls
-from httpparser import read_http
+from proxany.decode import tls
+from proxany.httpparser import read_http
 
 
 class HttpsHandler(threading.Thread):
@@ -100,7 +99,7 @@ class HttpsHandler(threading.Thread):
             return
 
         response = read_http(proxy_sock)
-        print(response)
+        print('response', response)
 
         proxy_sock.sendall(data_client_hello)
 
