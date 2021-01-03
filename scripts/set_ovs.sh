@@ -80,6 +80,7 @@ stop() {
   ip a flush br0
   ip a flush br-ext
   ip a add $mgmt_ip_cidr dev $client_port
+  ps aux | grep proxany | awk '{print $2}' | xargs -r kill
 }
 
 "$@"
