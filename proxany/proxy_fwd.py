@@ -1,7 +1,7 @@
 import threading
 import sys
 
-sys.path += ['../proximate']
+sys.path += ['../proxany']
 print(sys.path)
 from proxany import server
 
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     port = int(sys.argv[2])
     # port = 3128
     proxy_ip = sys.argv[3]
-    proxy_port = sys.argv[4]
+    proxy_port = int(sys.argv[4])
 
     # server.start(ip, port, 'http')
     threading.Thread(target=server.start, args=(ip, port, 'http', proxy_ip, proxy_port)).start()
