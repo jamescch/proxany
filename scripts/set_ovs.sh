@@ -47,14 +47,20 @@ add-flow() {
 }
 
 start() {
+  if [ "$EUID" -ne 0 ]
+    then echo "Please run as root"
+    exit
+  fi
+
   export PATH=$PATH:/usr/local/share/openvswitch/scripts
   ovs-ctl start
 
   get-mac $client_port
   ovs-vsctl --may-exist add-br br0 -- set bridge br0 other-config:hwaddr=\"$ovs_mac2\"
   ip link set br0 up
-  ip addr add $mgmt_ip_cidr dev br0
-  ip a del $mgmt_ip_cidr dev $client_port
+  ip a add $mgmt_ip_cidr dev br0
+  ip a flush $client_port
+  ip a flush $ext_port
 
   ovs-vsctl add-port br0 $client_port
   ovs-vsctl add-port br0 $ext_port
@@ -73,6 +79,11 @@ start() {
 }
 
 stop() {
+  if [ "$EUID" -ne 0 ]
+    then echo "Please run as root"
+    exit
+  fi
+
   export PATH=$PATH:/usr/local/share/openvswitch/scripts
   ovs-vsctl del-port $client_port # This will lose connection to client!
   ovs-vsctl del-port $ext_port
