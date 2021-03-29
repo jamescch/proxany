@@ -75,7 +75,7 @@ start() {
 
   add-flow
 
-  sudo python3 proxany/proxy_fwd.py 0.0.0.0 $mitm_port $proxy_ip $proxy_port &
+  sudo python3 proxany/proxy_fwd.py 0.0.0.0 $mitm_port $proxy_ip $proxy_port &> proxany.log &
 }
 
 stop() {
@@ -93,5 +93,21 @@ stop() {
   ip a add $mgmt_ip_cidr dev $client_port
   ps aux | grep proxany | awk '{print $2}' | xargs -r kill
 }
+
+help() {
+  cat <<EOF
+Usage: $0 [options]
+
+  help    show help message
+  start   start the proxany program
+  stop    stop the proxany program
+EOF
+}
+
+if [ $# -eq 0 ]
+then
+  help
+  exit 1
+fi
 
 "$@"
