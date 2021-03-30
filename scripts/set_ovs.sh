@@ -3,14 +3,14 @@
 client_port=enp0s8
 ext_port=enp0s10
 mgmt_ip_cidr=192.168.56.3/24
-mitm_ip_cidr=192.168.2.2/24
-mitm_ip=192.168.2.2
+data_ip_cidr=192.168.2.2/24
 proxy_ip=192.168.2.1
 proxy_port=3128
-#mitm_ip_16=c0a80202
-mitm_ip_16=$(printf '%02x' ${mitm_ip//./ })
-mitm_port=3128
-mitm_port_s=3129
+
+data_ip=${data_ip_cidr%/*}
+data_ip_16=$(printf '%02x' ${data_ip//./ })
+data_port=3128
+data_port_s=3129
 client_port_num=
 ext_port_num=
 
@@ -30,18 +30,18 @@ add-flow() {
   get-mac br-ext
   get-port-num
   ovs-ofctl del-flows br0
-  # 3 is br-ext port num, while 1 is port num of client <-- what if interface number changed!!!
+
   ovs-ofctl add-flow br0 -O openflow13 "priority=200,in_port=$client_port,tcp,tp_dst=443, \
   actions=load:$ext_port_num->reg0[0..3],load:$client_port_num->reg0[4..7],\
-  learn(idle_timeout=10,priority=320,table=0,dl_type=0x800,nw_proto=6,nw_src,nw_dst,tp_src,tp_dst,load:0x$ovs_mac1->dl_dst,load:0x$mitm_ip_16->nw_dst,load:$mitm_port_s->tp_dst,output:reg0[0..3]),\
-  learn(idle_timeout=10,priority=310,table=0,dl_type=0x800,nw_proto=6,nw_src=$mitm_ip,nw_dst=nw_src,tp_src=$mitm_port_s,tp_dst=tp_src,load:nw_dst->nw_src,load:443->tp_src,output:reg0[4..7]),\
-  mod_dl_dst:$ovs_mac2,mod_nw_dst:$mitm_ip,mod_tp_dst:$mitm_port_s,output:br-ext"
+  learn(idle_timeout=10,priority=320,table=0,dl_type=0x800,nw_proto=6,nw_src,nw_dst,tp_src,tp_dst,load:0x$ovs_mac1->dl_dst,load:0x$data_ip_16->nw_dst,load:$data_port_s->tp_dst,output:reg0[0..3]),\
+  learn(idle_timeout=10,priority=310,table=0,dl_type=0x800,nw_proto=6,nw_src=$data_ip,nw_dst=nw_src,tp_src=$data_port_s,tp_dst=tp_src,load:nw_dst->nw_src,load:443->tp_src,output:reg0[4..7]),\
+  mod_dl_dst:$ovs_mac2,mod_nw_dst:$data_ip,mod_tp_dst:$data_port_s,output:br-ext"
 
   ovs-ofctl add-flow br0 -O openflow13 "priority=200,in_port=$client_port,tcp,tp_dst=80, \
   actions=load:$ext_port_num->reg0[0..3],load:$client_port_num->reg0[4..7],\
-  learn(idle_timeout=10,priority=220,table=0,dl_type=0x800,nw_proto=6,nw_src,nw_dst,tp_src,tp_dst,load:0x$ovs_mac1->dl_dst,load:0x$mitm_ip_16->nw_dst,load:$mitm_port->tp_dst,output:reg0[0..3]),\
-  learn(idle_timeout=10,priority=210,table=0,dl_type=0x800,nw_proto=6,nw_src=$mitm_ip,nw_dst=nw_src,tp_src=$mitm_port,tcp_dst=tcp_src,load:nw_dst->nw_src,load:80->tp_src,output:reg0[4..7]),\
-  mod_dl_dst:$ovs_mac2,mod_nw_dst:$mitm_ip,mod_tp_dst:$mitm_port,output:br-ext"
+  learn(idle_timeout=10,priority=220,table=0,dl_type=0x800,nw_proto=6,nw_src,nw_dst,tp_src,tp_dst,load:0x$ovs_mac1->dl_dst,load:0x$data_ip_16->nw_dst,load:$data_port->tp_dst,output:reg0[0..3]),\
+  learn(idle_timeout=10,priority=210,table=0,dl_type=0x800,nw_proto=6,nw_src=$data_ip,nw_dst=nw_src,tp_src=$data_port,tcp_dst=tcp_src,load:nw_dst->nw_src,load:80->tp_src,output:reg0[4..7]),\
+  mod_dl_dst:$ovs_mac2,mod_nw_dst:$data_ip,mod_tp_dst:$data_port,output:br-ext"
 
   ovs-ofctl add-flow br0 -O openflow13 priority=0,actions=normal
 }
@@ -71,11 +71,11 @@ start() {
   macc=$(ovs-vsctl get interface br-ext mac-in-use)
   ovs-vsctl set interface br-ext mac="$macc"
   ip link set br-ext up
-  ip addr add $mitm_ip_cidr dev br-ext
+  ip addr add $data_ip_cidr dev br-ext
 
   add-flow
 
-  sudo python3 proxany/proxy_fwd.py 0.0.0.0 $mitm_port $proxy_ip $proxy_port &> proxany.log &
+  sudo python3 proxany/proxy_fwd.py 0.0.0.0 $data_port $proxy_ip $proxy_port &> proxany.log &
 }
 
 stop() {
