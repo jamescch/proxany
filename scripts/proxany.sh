@@ -96,11 +96,12 @@ stop() {
 
 help() {
   cat <<EOF
-Usage: $0 [options]
+Usage: $0 COMMAND
 
-  help    show help message
-  start   start the proxany program
-  stop    stop the proxany program
+commands:
+  help         show help message
+  start        start the proxany program
+  stop         stop the proxany program
 EOF
 }
 
