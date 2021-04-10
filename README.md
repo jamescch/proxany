@@ -81,5 +81,5 @@ Apache 2.0
 
 ## Help / Contact
 
-If you have any questions, please contact us at greensun1231@gmail.com
+If you have any questions, please open an issue or contact us at greensun1231@gmail.com
 
