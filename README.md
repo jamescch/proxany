@@ -22,7 +22,7 @@ Currently the following protocols are supported:
 
 ## Architecture
 
-Image TBD
+![alt text](https://github.com/jamescch/proxany/blob/master/arch.png)
 
 ## Installation
 ### Prerequisites
