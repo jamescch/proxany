@@ -12,4 +12,4 @@ sudo ./configure
 sudo make
 sudo make install
 
-rm -rf openvswitch-$ver.tar.gz openvswitch-$ver
+sudo rm -rf openvswitch-$ver.tar.gz openvswitch-$ver

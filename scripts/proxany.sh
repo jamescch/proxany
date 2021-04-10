@@ -75,6 +75,10 @@ start() {
 
   add-flow
 
+  if [[ $0 != *"scripts/proxany.sh"* ]]; then
+    # must run from root directory
+    cd ..
+  fi
   sudo python3 proxany/proxy_fwd.py 0.0.0.0 $data_port $proxy_ip $proxy_port &> proxany.log &
 }
 
