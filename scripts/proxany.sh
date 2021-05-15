@@ -151,6 +151,7 @@ stop() {
 
 help() {
   cat <<EOF
+proxany 0.2.0
 Usage: $0 COMMAND
 
 commands:
