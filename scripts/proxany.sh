@@ -110,6 +110,7 @@ start() {
 
     ip link set br-ext up
     ip addr add $data_ip_cidr dev br-ext
+    ip r add default via $gateway
   fi
 
 
