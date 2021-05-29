@@ -21,6 +21,8 @@ Currently the following protocols are supported:
 * HTTP - 80
 * HTTPS - 443
 
+For the other unspported protocols, proxany will just forward them like a switch or a router depending on which mode you are running.
+
 ## Architecture
 
 Two modes can be deployed on your preference.
@@ -30,7 +32,7 @@ In this mode it is required to change the gateway IP on the user computer to the
 Interception mode is that the proxany computer is put between the user computer and the network. So the proxany can intercept the traffic.
 In this mode there is no need to change any configuration on the user computer.
 
-![alt text](https://github.com/jamescch/proxany/blob/master/arch.png)
+![alt text](https://github.com/jamescch/proxany/raw/master/arch.png)
 
 ## Installation
 ### Prerequisites
