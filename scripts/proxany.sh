@@ -49,14 +49,14 @@ add-flow() {
 
   ovs-ofctl add-flow br0 -O openflow13 "priority=200,in_port=$client_port,tcp,tp_dst=443,$extra_match \
   actions=load:$ext_port_num->reg0[0..3],load:$client_port_num->reg0[4..7],\
-  learn(idle_timeout=10,priority=320,table=0,dl_type=0x800,nw_proto=6,nw_src,nw_dst,tp_src,tp_dst,load:0x$ovs_mac1->dl_dst,load:0x$data_ip_16->nw_dst,load:$data_port_s->tp_dst,output:reg0[0..3]),\
-  learn(idle_timeout=10,priority=310,table=0,dl_type=0x800,nw_proto=6,nw_src=$data_ip,nw_dst=nw_src,tp_src=$data_port_s,tp_dst=tp_src,load:nw_dst->nw_src,load:443->tp_src,output:reg0[4..7]),\
+  learn(idle_timeout=0,fin_idle_timeout=10,priority=320,table=0,dl_type=0x800,nw_proto=6,nw_src,nw_dst,tp_src,tp_dst,load:0x$ovs_mac1->dl_dst,load:0x$data_ip_16->nw_dst,load:$data_port_s->tp_dst,output:reg0[0..3]),\
+  learn(idle_timeout=0,fin_idle_timeout=10,priority=310,table=0,dl_type=0x800,nw_proto=6,nw_src=$data_ip,nw_dst=nw_src,tp_src=$data_port_s,tp_dst=tp_src,load:nw_dst->nw_src,load:443->tp_src,output:reg0[4..7]),\
   mod_dl_dst:$ovs_mac2,mod_nw_dst:$data_ip,mod_tp_dst:$data_port_s,output:br-ext"
 
   ovs-ofctl add-flow br0 -O openflow13 "priority=200,in_port=$client_port,tcp,tp_dst=80,$extra_match \
   actions=load:$ext_port_num->reg0[0..3],load:$client_port_num->reg0[4..7],\
-  learn(idle_timeout=10,priority=220,table=0,dl_type=0x800,nw_proto=6,nw_src,nw_dst,tp_src,tp_dst,load:0x$ovs_mac1->dl_dst,load:0x$data_ip_16->nw_dst,load:$data_port->tp_dst,output:reg0[0..3]),\
-  learn(idle_timeout=10,priority=210,table=0,dl_type=0x800,nw_proto=6,nw_src=$data_ip,nw_dst=nw_src,tp_src=$data_port,tcp_dst=tcp_src,load:nw_dst->nw_src,load:80->tp_src,output:reg0[4..7]),\
+  learn(idle_timeout=0,fin_idle_timeout=10,priority=220,table=0,dl_type=0x800,nw_proto=6,nw_src,nw_dst,tp_src,tp_dst,load:0x$ovs_mac1->dl_dst,load:0x$data_ip_16->nw_dst,load:$data_port->tp_dst,output:reg0[0..3]),\
+  learn(idle_timeout=0,fin_idle_timeout=10,priority=210,table=0,dl_type=0x800,nw_proto=6,nw_src=$data_ip,nw_dst=nw_src,tp_src=$data_port,tcp_dst=tcp_src,load:nw_dst->nw_src,load:80->tp_src,output:reg0[4..7]),\
   mod_dl_dst:$ovs_mac2,mod_nw_dst:$data_ip,mod_tp_dst:$data_port,output:br-ext"
 
   ovs-ofctl add-flow br0 -O openflow13 priority=0,actions=normal

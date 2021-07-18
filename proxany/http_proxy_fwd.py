@@ -99,19 +99,11 @@ class HttpHandler(threading.Thread):
         host, port = get_host_from_header(request[0])
         print('aaa {}:{}'.format(host, port))
 
-        if ("icloud" in host) or ("dropbox" in host) or ("apple" in host):
-            return
-
-        # if ("wiki" not in host) and ("neverssl" not in host):
-        #     return
-
         print(request[0])
-        mod_request = request[0]
-        # mod_request = request[0].replace('Connection', 'Proxy-Connection')
-        mod_request = request[0].replace('GET ', f'GET http://{host}')
+        p_space = request[0].find(' ')
+        mod_request = request[0][:p_space+1] + f'http://{host}' + request[0][p_space+1:]
         mod_request = mod_request.replace('Connection: keep-alive', 'Connection: close')
         # mod_request = mod_request.replace('\r\n\r\n', '\r\nProxy-Connection: Keep-Alive\r\n\r\n')
-        # rsock = self.create_socket_and_connect_to_origin_dst(host, int(port))
         rsock = self.create_socket_and_connect_to_origin_dst(self.proxy_ip, self.proxy_port)
 
         # 4. Forward the request sent by user to the fakeSocket
